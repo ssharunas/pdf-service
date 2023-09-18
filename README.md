@@ -100,14 +100,16 @@ variety of licenses, including GPLv2 and GPLv3 code.
 It's not recommended allowing untrusted HTML input.
 Use trusted HTML templates and sanitize user inputs.
 
-Fetching of external assets is prohibited as of now. You can add internal assets with the [multipart
-API](#multipart-API).
+Fetching of external assets is prohibited by default. You can add internal assets with the [multipart
+API](#multipart-API) or allow them with query parameter *isAllowExternalResources*.
 
 If your instance is exposed publicly, I recommend using a reverse proxy to terminate TLS connections
 and require authentication. You could use HTTP Basic Auth and then pass the pdf-service URL to your
 client software via an environment variable. This way auth information can be embedded like this:
 `https://API_USER:API_TOKEN@pdf.example.com/generate`, where `API_USER` and `API_TOKEN` are the
 credentials you set up in the reverse proxy.
+
+Alternatively you can pass environment variables *BASIC_AUTH_USERNAME* and *BASIC_AUTH_PASSWORD* for built-in basic auth.
 
 ### Environment variables
 
@@ -124,6 +126,8 @@ credentials you set up in the reverse proxy.
   normally shouldn't need to overwrite it.
 - `SENTRY_TAG_*` Set a tag to a specific value for all transactions.
   For example to set the tag `test` to `abc`, set the environment variable `SENTRY_TAG_TEST=abc`.
+- `BASIC_AUTH_USERNAME` - username for basic auth.
+- `BASIC_AUTH_PASSWORD` - password for basic auth.
 
 ### Health check
 

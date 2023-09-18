@@ -279,3 +279,4 @@ dmypy.json
 
 e2e/data/**/*.pdf
 coverage
+/.vs/
