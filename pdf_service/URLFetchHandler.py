@@ -6,6 +6,7 @@ from werkzeug.exceptions import BadRequest, Forbidden, HTTPException
 from sentry_sdk import add_breadcrumb
 from urllib.parse import urlparse, ParseResult
 from pdf_service.data_uri import parse as datauri_parse
+import weasyprint
 
 from .errors import URLFetcherCalledAfterExitException
 
@@ -29,9 +30,10 @@ class URLFetchHandler:
     >>>   doc = html.render()
     """
 
-    def __init__(self, files: Optional[MultiDict] = None):
+    def __init__(self, files: Optional[MultiDict] = None, isAllowExternal: Optional[bool] = False):
         self.http_errors = []
         self.closed = False
+        self.isAllowExternal = isAllowExternal
         self.files = files
 
     def __enter__(self):
@@ -109,7 +111,10 @@ class URLFetchHandler:
         }
 
     def _handle_external_fetch(self, url: str, parsed: ParseResult):
-        add_breadcrumb(message="Refused to fetch URL", data={'url': url})
-        raise Forbidden(
-            description="Attempted to fetch forbidden url (%r)" % url
-        )
+        if self.isAllowExternal:
+            return weasyprint.default_url_fetcher(url)
+        else:
+            add_breadcrumb(message="Refused to fetch URL", data={'url': url})
+            raise Forbidden(
+                description="Attempted to fetch forbidden url (%r)" % url
+            )

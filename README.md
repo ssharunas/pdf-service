@@ -34,8 +34,13 @@ docker stop pdf
 ```
 
 ## API
+### Endpoints
+- /generate - generates PDF from html content. Content may be provided either as "text/html" body, either as "multipart/form-data" (see below). In case of "multipart/form-data", additional resources may be provided, such as images, styles, etc.
+    **Parameters:**
+  - ?isAllowExternalResources=[True|**False**] - by default loading external resources (i.e. https://exaple.com/image.png), not included in request will result in an error. This parameter allows to change that behaviour.
+  - ?password=string - encrypt generated pdf with given password. Password can also be provided via heder 'X-Password'. Header has higher priority than query parameter.
 
-### Basic "simple" API without asset support
+#### Basic "simple" API without asset support
 
 Make a `POST` request to `/generate` with the HTML file you want to render as the body.
 The response will be the PDF file.
@@ -48,7 +53,7 @@ curl \
   > hello_world.pdf
 ```
 
-### Multipart API
+#### Multipart API
 
 Make a `POST` request to `/generate` with a `Content-Type` of `multipart/form-data`. Provide your
 HTML input as `index.html` and add any other required assets. The assets can be referenced _in the 

@@ -22,3 +22,5 @@ weasyprint==58.1
 webencodings==0.5.1
 Werkzeug==2.3.7
 zopfli==0.2.2
+pypdf==3.16.0
+pycryptodome==3.18.0
