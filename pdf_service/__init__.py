@@ -1,7 +1,6 @@
 import logging
 from sentry_sdk import init, configure_scope
 from flask import Flask, make_response
-from flask_basicauth import BasicAuth
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 import os
@@ -26,14 +25,7 @@ init(
 
 apply_sentry_tags()
 
-if os.environ.get('BASIC_AUTH_USERNAME') and os.environ.get('BASIC_AUTH_PASSWORD'):
-    pdf_service.config['BASIC_AUTH_USERNAME'] = os.environ.get('BASIC_AUTH_USERNAME')
-    pdf_service.config['BASIC_AUTH_PASSWORD'] = os.environ.get('BASIC_AUTH_PASSWORD')
-    basic_auth = BasicAuth(pdf_service)
-    print(' * Using Basic authentication')
-
 @pdf_service.route('/generate', methods=['POST'])
-@basic_auth.required
 def generate_pdf():
     return generate()
 
@@ -48,7 +40,6 @@ def health():
     return response
 
 @pdf_service.route('/', methods=['GET'])
-@basic_auth.required
 def root():
     response = make_response("HTML to PDF service.\n * https://github.com/ssharunas/pdf-service")
     response.headers['Content-Type'] = 'text/plain'
