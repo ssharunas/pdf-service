@@ -7,7 +7,8 @@ import os
 
 from .sentry_tags import apply_sentry_tags
 from .generate import generate
-
+from .encryption import encryptPdf
+from .fields import get_fields, set_fields
 
 pdf_service = Flask(__name__)
 sentry_logging = LoggingIntegration(
@@ -29,6 +30,17 @@ apply_sentry_tags()
 def generate_pdf():
     return generate()
 
+@pdf_service.route('/encrypt', methods=['POST'])
+def encrypt_pdf():
+    return encryptPdf()
+
+@pdf_service.route('/form-fields', methods=['GET'])
+def get_form_fields():
+    return get_fields()
+
+@pdf_service.route('/form-fields', methods=['POST'])
+def set_form_fields():
+    return set_fields()
 
 @pdf_service.route('/health', methods=['GET'])
 def health():

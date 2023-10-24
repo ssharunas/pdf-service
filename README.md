@@ -35,49 +35,75 @@ docker stop pdf
 
 ## API
 ### Endpoints
-- /generate - generates PDF from html content. Content may be provided either as "text/html" body, either as "multipart/form-data" (see below). In case of "multipart/form-data", additional resources may be provided, such as images, styles, etc.
-    **Parameters:**
+- [POST] **/encrypt** - puts a password on the pdf file. Pdf file must NOT be encrypted before passing it for encryption.
+    *Parameters:*
+  - ?password=string - encrypt generated pdf with given password. Password can also be provided via heder 'X-Password'. Header has higher priority over query parameter.
+  
+  *Example:*
+  Make a `POST` request to `/encrypt` with the HTML file you want to encrypt as the body and password as a parameter. The response will be the PDF.
+    ```sh
+    curl \
+        --data-binary @test.pdf \
+        --output encrypted.pdf \
+        https://pdf.example.com/encrypt?password=xxx
+    ```
+
+- [GET] **/form-fields** - gets all form fields in the pdf file
+    *Example:*
+	Make a `GET` request to `/form-fields` with pdf as body and `Content-Type`of `application/pdf`. Returns `text/json` with all form fields in pdf.
+    ```sh
+    curl \
+        --data-binary @form-test.pdf \
+        https://pdf.example.com/form-fields
+    > { "field-name": "field-value", "field-name2": null }
+    ```
+
+- [POST] **/form-fields** - sets form field values in pdf and returns filled pdf.
+    *Example:*
+	Make a `POST` request to `/form-fields` with pdf and form field values, with a `Content-Type` of `multipart/form-data`.
+    ```sh
+    curl \
+        -F pdf=@form-test.pdf \
+        -F field-name=field-value \
+        -F field-name2=field-value2 \
+        --output filled_form.pdf \
+        https://pdf.example.com/form-fields
+    ```
+	
+- [POST] **/generate** - generates PDF from html content. Content may be provided either as "text/html" body, either as "multipart/form-data" (see below). In case of "multipart/form-data", additional resources may be provided, such as images, styles, etc.
+    *Parameters:*
   - ?isAllowExternalResources=[True|**False**] - by default loading external resources (i.e. https://exaple.com/image.png), not included in request will result in an error. This parameter allows to change that behaviour.
-  - ?password=string - encrypt generated pdf with given password. Password can also be provided via heder 'X-Password'. Header has higher priority than query parameter.
+  - ?password=string - encrypt generated pdf with given password. Password can also be provided via heder 'X-Password'. Header has higher priority over query parameter.
 
-#### Basic "simple" API without asset support
+  *Basic "simple" API example without asset support:*
+  Make a `POST` request to `/generate` with the HTML file you want to render as the body. The response will be the PDF file. 
+    ```sh
+    curl \
+        -H "Content-Type: text/html" \
+        --data '<p>Hello World!</p>' \
+        --output hello_world.pdf \
+        https://pdf.example.com/generate 
+    ```
+  *Multipart API example:*
+    Make a `POST` request to `/generate` with a `Content-Type` of `multipart/form-data`.
+    Provide your HTML input as `index.html` and add any other required assets. The assets can be referenced _in the HTML_ either as an absolute URL like `/image.png` or a relative one `image.png`. Relative URLs are resolved against `/`. **Omit the leading slash** for the `multipart/form-data` `name` attribute.
+    ```sh
+    curl \
+        -F index.html=@index.html \
+        -F image.png=@image.png \
+        -F sub-path/image.png=@sub-path/image.png \
+        --output hello_world.pdf
+        https://pdf.example.com/generate \
+    ```
 
-Make a `POST` request to `/generate` with the HTML file you want to render as the body.
-The response will be the PDF file.
-
-```sh
-curl \
-  -H "Content-Type: text/html" \
-  --data '<p>Hello World!</p>' \
-  https://pdf.example.com/generate \
-  > hello_world.pdf
-```
-
-#### Multipart API
-
-Make a `POST` request to `/generate` with a `Content-Type` of `multipart/form-data`. Provide your
-HTML input as `index.html` and add any other required assets. The assets can be referenced _in the 
-HTML_ either as an absolute URL like `/image.png` or a relative one `image.png`. Relative URLs are
-resolved against `/`. **Omit the leading slash** for the `multipart/form-data` `name` attribute.
-
-```sh
-curl \
-  -F index.html=@index.html \
-  -F image.png=@image.png \
-  -F sub-path/image.png=@sub-path/image.png \
-  https://pdf.example.com/generate \
-  > hello_world.pdf
-```
-
-```html
-<!-- index.html -->
-<p>With an image:</p>
-<img src="/image.png" />
-<img src="/sub-path/image.png" />
-```
+    ```html
+    <!-- index.html -->
+    <p>With an image:</p>
+    <img src="/image.png" />
+    <img src="/sub-path/image.png" />
+    ```
 
 ## Deployment
-
 ### Versioning
 
 The docker image is tagged as `mormahr/pdf-service`.
@@ -150,7 +176,8 @@ Desktop.
 
 ### Setup the development environment
 
-- Setup python venv 
+- If you running windows - install GTK3 runtime: https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases (dont' forget to logoff/login after install)
+- Setup python venv `python -m venv venv/`
 - `pip install -r requirements.txt -r requirements-dev.txt` (or: `pip install -e '.[dev]'`)
 - Install docker and docker-compose to run tests. 
   Tests run in docker to ensure render output doesn't differ based on platform.

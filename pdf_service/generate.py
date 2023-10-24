@@ -1,5 +1,4 @@
 from io import BytesIO
-from os import read
 from typing import Optional
 
 from flask import make_response, request, Response
@@ -7,22 +6,9 @@ from sentry_sdk import start_span, set_context
 from weasyprint import HTML
 from werkzeug.datastructures import FileStorage
 import werkzeug
-import pypdf
 
 from .URLFetchHandler import URLFetchHandler
-
-def encrypt(data: bytes, password: str) -> bytes:
-    reader = pypdf.PdfReader(BytesIO(data))
-    writer = pypdf.PdfWriter(reader)
-
-    for page in reader.pages:
-        writer.add_page(page)
-
-    writer.encrypt(password, algorithm="AES-256")
-    with BytesIO() as output:
-        writer.write(output)
-        output.seek(0)
-        return output.read()
+from .encryption import encrypt
 
 def generate() -> Response:
     with start_span(op='decode'):
