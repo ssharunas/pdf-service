@@ -38,6 +38,11 @@ def encrypt_pdf():
 def get_form_fields():
     return get_fields()
 
+#.net 4.8 does not support GET with body. Use PUT as a workaround
+@pdf_service.route('/form-fields', methods=['PUT'])
+def get_form_fields2():
+    return get_fields()
+
 @pdf_service.route('/form-fields', methods=['POST'])
 def set_form_fields():
     return set_fields()

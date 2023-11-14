@@ -1,5 +1,6 @@
 import io
 from typing import Optional
+from urllib.error import HTTPError
 
 from werkzeug.datastructures import MultiDict
 from werkzeug.exceptions import BadRequest, Forbidden, HTTPException
@@ -44,7 +45,11 @@ class URLFetchHandler:
         if len(self.http_errors) == 1:
             raise self.http_errors[0]
         elif len(self.http_errors) > 1:
-            raise BadRequest(description="Multiple errors occurred")
+            try:
+                description = '\n'.join(map(lambda x: str(x), self.http_errors));
+            except:
+                pass
+            raise BadRequest(description="Multiple errors occurred\n" + description )
 
     def __call__(self, url: str):
         if self.closed:
@@ -54,6 +59,12 @@ class URLFetchHandler:
             return self._handle_fetch(url)
         except HTTPException as error:
             self.http_errors.append(error)
+            raise error
+        except HTTPError as error:
+            if error.code == 404:
+                self.http_errors.append(Exception(f"Resource not found: {error.url}"))
+            else:
+                self.http_errors.append(error)
             raise error
 
     def _handle_fetch(self, url: str):

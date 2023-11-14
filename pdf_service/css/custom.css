@@ -1,0 +1,13 @@
+@page {
+	size: A4;
+	margin: 10px;
+}
+
+body {
+	font-size: 7pt;
+	word-break: break-word;
+}
+
+th {
+	text-align: center
+}
