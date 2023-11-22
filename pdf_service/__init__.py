@@ -58,7 +58,7 @@ def health():
 
 @pdf_service.route('/', methods=['GET'])
 def root():
-    response = make_response("HTML to PDF service.\n * https://github.com/ssharunas/pdf-service v0.3")
+    response = make_response("HTML to PDF service.\n * https://github.com/ssharunas/pdf-service v0.4")
     response.headers['Content-Type'] = 'text/plain'
     return response
 

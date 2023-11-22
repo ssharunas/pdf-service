@@ -2,6 +2,7 @@ from io import BytesIO
 from typing import Optional
 from os import listdir
 from os.path import isfile, join
+from PIL.Image import ROTATE_180, ROTATE_270, ROTATE_90
 
 from flask import make_response, request, Response
 from sentry_sdk import start_span, set_context
@@ -14,6 +15,8 @@ import weasyprint
 
 from .URLFetchHandler import URLFetchHandler
 from .encryption import encrypt
+from .rotation import rotate_pdf
+from .errors import make_error
 
 css = [];
 
@@ -46,24 +49,42 @@ def generate() -> Response:
     baseUrl = request.headers.get('X-BaseUrl') or request.args.get("base-url")
     isAllowExternal = bool(baseUrl) or request.args.get("isAllowExternalResources", default= False, type= bool);
 
-    with URLFetchHandler(request.files, isAllowExternal) as url_fetcher:
-        with start_span(op='parse'):
-            html = HTML(
-                file_obj=html_file,
-                base_url=baseUrl  or '/',
-                url_fetcher=url_fetcher,
-                encoding = 'UTF-8'
-            )
+    try:
+        with URLFetchHandler(request.files, isAllowExternal) as url_fetcher:
+            with start_span(op='parse'):
+                html = HTML(
+                    file_obj=html_file,
+                    base_url=baseUrl  or '/',
+                    url_fetcher=url_fetcher,
+                    encoding = 'UTF-8'
+                )
 
-        with start_span(op='render'):
-            doc = html.render(presentational_hints=True, stylesheets=css)
+            with start_span(op='render'):
+                doc = html.render(presentational_hints=True, stylesheets=css)
+    except Exception as e:
+        return make_error('An error while rendering pdf. ' + str(e.args[0]), 500);
 
-    with start_span(op='write-pdf'):
-        pdf = doc.write_pdf()
+    try:
+        with start_span(op='write-pdf'):
+            pdf = doc.write_pdf()
+    except Exception as e:
+        return make_error('An error while writing pdf. ' + str(e.args[0]), 500);
 
-    password = request.headers.get('X-Password') or request.args.get("password")
-    if password:
-        pdf = encrypt(pdf, password)
+    try:
+        rotation = request.args.get("rotate", type= int)
+        if rotation:
+            if rotation != 90 and rotation != 180 and rotation != 270:
+                 return make_error(f'Invalid "rotate" parameter rotate={rotation}! Supported values are: 90, 180, 270.', 500)
+            pdf = rotate_pdf(pdf, rotation);
+    except Exception as e:
+        return make_error('An error while rotating pdf. ' + str(e.args[0]), 500);
+
+    try:
+        password = request.headers.get('X-Password') or request.args.get("password")
+        if password:
+            pdf = encrypt(pdf, password)
+    except Exception as e:
+        return make_error('An error while encrypting pdf. ' + str(e.args[0]), 500);
 
     set_context("pdf-details", {
         "html_size": html_size,

@@ -74,6 +74,7 @@ docker stop pdf
     *Parameters:*
   - ?isAllowExternalResources=[True|**False**] - by default loading external resources (i.e. https://exaple.com/image.png), not included in request will result in an error. This parameter allows to change that behaviour.
   - ?password=string - encrypt generated pdf with given password. Password can also be provided via heder 'X-Password'. Header has higher priority over query parameter.
+  - ?rotate=int - rotates all pages. Supported values: 0, 90: 180, 270
 
   *Basic "simple" API example without asset support:*
   Make a `POST` request to `/generate` with the HTML file you want to render as the body. The response will be the PDF file. 
