@@ -1,8 +1,8 @@
-FROM python:3.10.4-alpine3.14 AS compiler
+FROM python:alpine3.19 AS compiler
 
 WORKDIR /usr/src/app
-
-RUN apk add --no-cache \
+RUN apk update \
+      && apk add --no-cache \
       gcc \
       g++ \
       musl-dev \
@@ -13,20 +13,21 @@ RUN apk add --no-cache \
       libffi-dev \
       openssl-dev \
       pango-dev \
-      shared-mime-info
+      shared-mime-info \
+      build-base
 
 RUN addgroup -S pdf_service_group && \
-    adduser --uid 1001 -S pdf_service_user -G pdf_service_group && \
-    chown pdf_service_user .
+      adduser --uid 1001 -S pdf_service_user -G pdf_service_group && \
+      chown pdf_service_user .
 USER pdf_service_user
 
+#RUN pip install --upgrade PyMuPDF==1.20.2
 RUN pip install --user --no-cache-dir gunicorn
 
 COPY requirements.txt .
-
 RUN pip install --user --no-cache-dir -r requirements.txt
 
-FROM python:3.10.4-alpine3.14 AS builder
+FROM python:alpine3.19 AS builder
 
 WORKDIR /usr/src/app
 
@@ -50,8 +51,8 @@ RUN apk add --no-cache \
       curl
 
 RUN addgroup -S pdf_service_group && \
-    adduser --uid 1001 -S pdf_service_user -G pdf_service_group && \
-    chown pdf_service_user .
+      adduser --uid 1001 -S pdf_service_user -G pdf_service_group && \
+      chown pdf_service_user .
 USER pdf_service_user
 
 COPY --from=compiler /home/pdf_service_user/.local/ /home/pdf_service_user/.local/
@@ -96,6 +97,7 @@ FROM builder AS production
 # Named stage so it can be optimized in the future. (Stage name is referenced by CI build script.)
 
 COPY pdf_service ./pdf_service
+COPY fonts ./fonts
 
 ARG GITHUB_SHA
 ENV SENTRY_RELEASE=$GITHUB_SHA
