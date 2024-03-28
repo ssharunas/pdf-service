@@ -59,7 +59,7 @@ def set_fields() -> Response:
                 if widget.field_name in fields:
                     field_rect = widget.rect
                     field_value = fields[widget.field_name]
-                    page.insert_text(field_rect.bl, field_value, fontfile=font_path, fontname="EXT_1")
+                    page.insert_text(field_rect.bl, field_value, fontfile=font_path, fontname="EXT_1", color=(0, 0, 0))
                     page.delete_widget(widget)
         
         pdf_document.subset_fonts()
